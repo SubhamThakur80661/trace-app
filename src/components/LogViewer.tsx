@@ -1,15 +1,57 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Pause, Play, Search, ShieldCheck, Cpu } from 'lucide-react';
+import { Pause, Play, Search, Trash2, Activity } from 'lucide-react';
+
+type LogLevel = 'INFO' | 'WARN' | 'ERROR' | 'DEBUG';
 
 interface LogEntry {
   id: string;
   time: string;
-  level: 'INFO' | 'WARN' | 'ERROR' | 'DEBUG';
+  level: LogLevel;
   service: string;
   message: string;
   latency: string;
 }
+
+const SERVICES = [
+  'auth-service',
+  'payment-gateway',
+  'db-pool',
+  'cache-worker',
+  'api-router',
+  'queue-consumer',
+  'billing-sync',
+];
+
+const MESSAGES: Record<LogLevel, string[]> = {
+  INFO: [
+    'Stream buffer flushed',
+    'Health check passed',
+    'Worker picked up the next job',
+    'Connection returned to the pool',
+    'GET /v1/telemetry HTTP/1.1 200 OK',
+  ],
+  WARN: [
+    'Retry attempt 1/3: upstream connection reset',
+    'Slow query: over the 200ms budget',
+    'Queue depth climbing past the usual range',
+    'Token refresh took two tries',
+  ],
+  ERROR: [
+    'Unhandled socket exception in payload parser',
+    'Connection pool exhausted on postgres-primary',
+    'Upstream returned 502 with no body',
+    'Write failed: log volume is full',
+  ],
+  DEBUG: [
+    'Cache miss on key: user:session:8821',
+    'Retrying DNS lookup for internal host',
+    'Payload parsed, 14 fields kept',
+    'Heartbeat received from worker 3',
+  ],
+};
+
+const LEVEL_WEIGHTS: LogLevel[] = ['INFO', 'INFO', 'INFO', 'WARN', 'WARN', 'ERROR', 'DEBUG'];
 
 const INITIAL_LOGS: LogEntry[] = [
   { id: '1', time: '21:44:02.102', level: 'INFO', service: 'auth-service', message: 'JWT token validated for user_8821', latency: '12ms' },
@@ -19,123 +61,212 @@ const INITIAL_LOGS: LogEntry[] = [
   { id: '5', time: '21:44:02.401', level: 'INFO', service: 'api-router', message: 'GET /v1/telemetry HTTP/1.1 200 OK', latency: '18ms' },
 ];
 
+const LEVELS: Array<LogLevel | 'ALL'> = ['ALL', 'INFO', 'WARN', 'ERROR', 'DEBUG'];
+
+const LEVEL_STYLES: Record<LogLevel, string> = {
+  INFO: 'bg-sky-400/10 text-sky-300 border-sky-400/25',
+  WARN: 'bg-amber-400/10 text-amber-300 border-amber-400/25',
+  ERROR: 'bg-red-400/10 text-red-300 border-red-400/25',
+  DEBUG: 'bg-zinc-400/10 text-zinc-300 border-zinc-400/25',
+};
+
+const ROW_TONE: Record<LogLevel, string> = {
+  INFO: 'border-l-transparent',
+  WARN: 'border-l-amber-400/60',
+  ERROR: 'border-l-red-400/70 bg-red-400/[0.05]',
+  DEBUG: 'border-l-transparent',
+};
+
+const MAX_LINES = 60;
+
+function randomLog(): LogEntry {
+  const level = LEVEL_WEIGHTS[Math.floor(Math.random() * LEVEL_WEIGHTS.length)];
+  const service = SERVICES[Math.floor(Math.random() * SERVICES.length)];
+  const pool = MESSAGES[level];
+  const message = pool[Math.floor(Math.random() * pool.length)];
+  const latency =
+    level === 'ERROR'
+      ? `${400 + Math.floor(Math.random() * 900)}ms`
+      : level === 'WARN'
+        ? `${80 + Math.floor(Math.random() * 380)}ms`
+        : level === 'DEBUG'
+          ? `${1 + Math.floor(Math.random() * 8)}ms`
+          : `${3 + Math.floor(Math.random() * 60)}ms`;
+
+  return {
+    id: Math.random().toString(36).slice(2, 10),
+    time: new Date().toISOString().split('T')[1].slice(0, 12),
+    level,
+    service,
+    message,
+    latency,
+  };
+}
+
 export function LogViewer() {
   const [logs, setLogs] = useState<LogEntry[]>(INITIAL_LOGS);
-  const [filter, setFilter] = useState<string>('ALL');
-  const [search, setSearch] = useState<string>('');
-  const [isStreaming, setIsStreaming] = useState<boolean>(true);
+  const [filter, setFilter] = useState<LogLevel | 'ALL'>('ALL');
+  const [search, setSearch] = useState('');
+  const [isStreaming, setIsStreaming] = useState(true);
 
   useEffect(() => {
     if (!isStreaming) return;
     const interval = setInterval(() => {
-      const services = ['auth-service', 'api-router', 'queue-consumer', 'billing-sync'];
-      const levels: Array<'INFO' | 'WARN' | 'ERROR'> = ['INFO', 'INFO', 'WARN', 'ERROR'];
-      const randomLevel = levels[Math.floor(Math.random() * levels.length)];
-      const randomService = services[Math.floor(Math.random() * services.length)];
-      
-      const newLog: LogEntry = {
-        id: Math.random().toString(36).substring(2, 9),
-        time: new Date().toISOString().split('T')[1].slice(0, 12),
-        level: randomLevel,
-        service: randomService,
-        message: randomLevel === 'ERROR' ? 'Unhandled socket exception in payload parser' : 'Stream buffer flushed successfully',
-        latency: `${Math.floor(Math.random() * 40 + 5)}ms`,
-      };
-
-      setLogs((prev) => [newLog, ...prev.slice(0, 7)]);
+      setLogs((prev) => [randomLog(), ...prev].slice(0, MAX_LINES));
     }, 2200);
-
     return () => clearInterval(interval);
   }, [isStreaming]);
 
-  const filteredLogs = logs.filter((log) => {
-    const matchesLevel = filter === 'ALL' || log.level === filter;
-    const matchesSearch = log.message.toLowerCase().includes(search.toLowerCase()) || log.service.toLowerCase().includes(search.toLowerCase());
-    return matchesLevel && matchesSearch;
+  const counts = useMemo(() => {
+    const tally: Record<LogLevel, number> = { INFO: 0, WARN: 0, ERROR: 0, DEBUG: 0 };
+    for (const log of logs) tally[log.level] += 1;
+    return tally;
+  }, [logs]);
+
+  const query = search.trim().toLowerCase();
+  const visible = logs.filter((log) => {
+    if (filter !== 'ALL' && log.level !== filter) return false;
+    if (!query) return true;
+    return (
+      log.message.toLowerCase().includes(query) ||
+      log.service.toLowerCase().includes(query)
+    );
   });
 
   return (
-    <div id="demo" className="w-full max-w-5xl mx-auto border border-border rounded-xl bg-surface/90 shadow-2xl overflow-hidden font-mono text-xs">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-background/50 px-4 py-3">
-        <div className="flex items-center gap-2">
-          <span className="h-3 w-3 rounded-full bg-red-500/80 inline-block" />
-          <span className="h-3 w-3 rounded-full bg-yellow-500/80 inline-block" />
-          <span className="h-3 w-3 rounded-full bg-green-500/80 inline-block" />
-          <span className="ml-2 text-muted font-sans text-xs">local-dev-cluster.log</span>
+    <div
+      id="demo"
+      className="w-full max-w-5xl mx-auto overflow-hidden rounded-xl border border-border bg-panel font-mono text-xs shadow-[0_24px_60px_-24px_rgb(0_0_0/0.8)]"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-surface/70 px-4 py-3">
+        <div className="flex items-center gap-3">
+          <span className="flex items-center gap-2" aria-label={isStreaming ? 'Stream live' : 'Stream paused'}>
+            <span className="relative flex h-2 w-2">
+              {isStreaming && (
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-60" />
+              )}
+              <span
+                className={`relative inline-flex h-2 w-2 rounded-full ${
+                  isStreaming ? 'bg-accent' : 'bg-amber-400'
+                }`}
+              />
+            </span>
+            <span className={`font-sans text-xs font-semibold tracking-wide ${isStreaming ? 'text-accent' : 'text-amber-300'}`}>
+              {isStreaming ? 'LIVE' : 'PAUSED'}
+            </span>
+          </span>
+          <span className="hidden h-4 w-px bg-border sm:block" aria-hidden="true" />
+          <span className="text-muted">local-dev-cluster.log</span>
         </div>
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setIsStreaming(!isStreaming)}
-            className="flex items-center gap-1.5 rounded-md border border-border bg-surface px-2.5 py-1 text-muted hover:text-foreground transition-colors"
+            onClick={() => setLogs([])}
+            className="flex items-center gap-1.5 rounded-md border border-border bg-surface px-2.5 py-1.5 text-muted transition-colors hover:text-foreground"
+            aria-label="Clear log buffer"
           >
-            {isStreaming ? <Pause className="h-3 w-3 text-amber-400" /> : <Play className="h-3 w-3 text-emerald-400" />}
-            <span>{isStreaming ? 'Pause Stream' : 'Resume'}</span>
+            <Trash2 className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Clear</span>
+          </button>
+          <button
+            onClick={() => setIsStreaming((s) => !s)}
+            className="flex items-center gap-1.5 rounded-md border border-border bg-surface px-2.5 py-1.5 text-foreground transition-colors hover:border-accent/50"
+            aria-label={isStreaming ? 'Pause stream' : 'Resume stream'}
+          >
+            {isStreaming ? (
+              <Pause className="h-3.5 w-3.5 text-amber-400" />
+            ) : (
+              <Play className="h-3.5 w-3.5 text-accent" />
+            )}
+            <span>{isStreaming ? 'Pause' : 'Resume'}</span>
           </button>
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-b border-border bg-surface p-3">
+      <div className="flex flex-col gap-3 border-b border-border bg-surface/40 p-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-muted" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
           <input
             type="text"
-            placeholder="Filter logs by service or text..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-md border border-border bg-background pl-9 pr-3 py-1.5 text-foreground placeholder:text-muted/60 focus:border-accent focus:outline-none"
+            placeholder="Search by service or message…"
+            aria-label="Search logs"
+            className="w-full rounded-md border border-border bg-background py-2 pl-9 pr-3 text-foreground placeholder:text-muted/60 focus:border-accent/60 focus:outline-none"
           />
         </div>
 
-        <div className="flex items-center gap-1">
-          {['ALL', 'INFO', 'WARN', 'ERROR'].map((lvl) => (
-            <button
-              key={lvl}
-              onClick={() => setFilter(lvl)}
-              className={`px-2.5 py-1 rounded text-[11px] font-medium transition-colors ${
-                filter === lvl ? 'bg-accent text-white' : 'text-muted hover:bg-border/50'
-              }`}
-            >
-              {lvl}
-            </button>
-          ))}
+        <div className="flex flex-wrap items-center gap-1" role="group" aria-label="Filter by level">
+          {LEVELS.map((lvl) => {
+            const active = filter === lvl;
+            const count = lvl === 'ALL' ? logs.length : counts[lvl];
+            return (
+              <button
+                key={lvl}
+                onClick={() => setFilter(lvl)}
+                aria-pressed={active}
+                className={`rounded-md border px-2.5 py-1.5 text-[11px] font-medium transition-colors ${
+                  active
+                    ? 'border-accent/50 bg-accent/10 text-accent'
+                    : 'border-transparent text-muted hover:bg-border/50 hover:text-foreground'
+                }`}
+              >
+                {lvl}
+                <span className={active ? 'ml-1.5 text-accent/70' : 'ml-1.5 text-muted/50'}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      <div className="p-2 sm:p-4 min-h-[280px] space-y-1.5 overflow-x-auto">
-        {filteredLogs.map((log) => (
-          <motion.div
-            key={log.id}
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.2 }}
-            className="flex flex-wrap items-start sm:items-center gap-2 sm:gap-3 rounded p-2 hover:bg-border/30 transition-colors text-[11px] sm:text-xs border-b border-border/20 last:border-0"
-          >
-            <span className="text-muted/70 shrink-0">{log.time}</span>
-            <span
-              className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold ${
-                log.level === 'ERROR'
-                  ? 'bg-red-500/10 text-red-400 border border-red-500/20'
-                  : log.level === 'WARN'
-                  ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                  : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-              }`}
-            >
-              {log.level}
-            </span>
-            <span className="text-accent/90 shrink-0">[{log.service}]</span>
-            <span className="text-foreground flex-1 break-all">{log.message}</span>
-            <span className="text-muted/50 text-[10px] shrink-0 ml-auto">{log.latency}</span>
-          </motion.div>
-        ))}
+      <div className="log-scroll max-h-[420px] min-h-[280px] overflow-y-auto px-2 py-2 sm:px-3">
+        {visible.length === 0 ? (
+          <div className="flex min-h-[264px] flex-col items-center justify-center gap-2 px-4 text-center">
+            <Activity className="h-5 w-5 text-muted/60" />
+            <p className="font-sans text-sm text-muted">Nothing matches that filter.</p>
+            <p className="font-sans text-xs text-muted/60">
+              Try a different level, or clear the search box.
+            </p>
+          </div>
+        ) : (
+          <ol className="space-y-px">
+            {visible.map((log) => (
+              <motion.li
+                key={log.id}
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.18 }}
+                className={`flex flex-wrap items-baseline gap-x-3 gap-y-0.5 rounded-r-md border-l-2 px-2 py-1.5 text-[11px] leading-relaxed hover:bg-border/25 sm:flex-nowrap sm:text-xs ${ROW_TONE[log.level]}`}
+              >
+                <span className="shrink-0 tabular-nums text-muted/70">{log.time}</span>
+                <span
+                  className={`w-12 shrink-0 rounded border px-1.5 py-px text-center text-[10px] font-semibold tracking-wide ${LEVEL_STYLES[log.level]}`}
+                >
+                  {log.level}
+                </span>
+                <span className="shrink-0 text-accent/80">[{log.service}]</span>
+                <span className="min-w-0 flex-1 break-words text-foreground/90">{log.message}</span>
+                <span className="shrink-0 tabular-nums text-muted/60">{log.latency}</span>
+              </motion.li>
+            ))}
+          </ol>
+        )}
       </div>
 
-      <div className="flex items-center justify-between border-t border-border bg-background/40 px-4 py-2 text-[10px] text-muted">
-        <div className="flex items-center gap-3">
-          <span className="flex items-center gap-1"><Cpu className="h-3 w-3" /> CPU: 0.8%</span>
-          <span className="flex items-center gap-1"><ShieldCheck className="h-3 w-3" /> Zero data leaves localhost</span>
-        </div>
-        <span>Buffer: {logs.length}/1000 lines</span>
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-border bg-surface/50 px-4 py-2 text-[10px] text-muted">
+        <span>
+          {visible.length} of {logs.length} lines shown
+        </span>
+        <span className="flex items-center gap-3">
+          <span>
+            <span className="text-red-300">{counts.ERROR} errors</span>
+            {' · '}
+            <span className="text-amber-300">{counts.WARN} warnings</span>
+          </span>
+          <span className="hidden sm:inline">Buffer keeps the last {MAX_LINES} lines</span>
+        </span>
       </div>
     </div>
   );

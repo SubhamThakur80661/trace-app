@@ -4,7 +4,7 @@ import { Features } from './components/Features';
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col justify-between selection:bg-accent selection:text-white">
+    <div className="min-h-screen bg-background text-foreground flex flex-col justify-between">
       <div>
         <Navbar />
         <main>
@@ -13,9 +13,9 @@ export default function App() {
         </main>
       </div>
 
-      <footer className="border-t border-border py-8 text-center text-xs text-muted">
+      <footer className="border-t border-border py-8 text-xs text-muted">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p>© {new Date().getFullYear()} Trace App. Designed for local developer tooling.</p>
+          <p>© {new Date().getFullYear()} Trace. A local log viewer — the demo streams sample logs.</p>
           <p className="text-muted/60">Acdyon Technical Assessment — Part 2</p>
         </div>
       </footer>
