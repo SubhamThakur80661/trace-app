@@ -20,6 +20,6 @@ npm run dev
 
 ## Stack
 
-React 19, TypeScript, Vite, Tailwind CSS 4, Framer Motion, lucide-react.
+React 19, TypeScript, Vite, Tailwind CSS 4, GSAP, Framer Motion, lucide-react.
 
 Live demo: https://trace-app-hydra-hamerins-projects.vercel.app

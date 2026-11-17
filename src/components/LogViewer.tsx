@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { motion } from 'framer-motion';
 import { Pause, Play, Search, Trash2, Activity } from 'lucide-react';
+import { Magnetic, useSpotlight } from '../lib/motion';
 
 type LogLevel = 'INFO' | 'WARN' | 'ERROR' | 'DEBUG';
 
@@ -108,6 +109,7 @@ export function LogViewer() {
   const [filter, setFilter] = useState<LogLevel | 'ALL'>('ALL');
   const [search, setSearch] = useState('');
   const [isStreaming, setIsStreaming] = useState(true);
+  const spotlight = useSpotlight<HTMLDivElement>();
 
   useEffect(() => {
     if (!isStreaming) return;
@@ -136,9 +138,14 @@ export function LogViewer() {
   return (
     <div
       id="demo"
-      className="w-full max-w-5xl mx-auto overflow-hidden rounded-xl border border-border bg-panel font-mono text-xs shadow-[0_24px_60px_-24px_rgb(0_0_0/0.8)]"
+      ref={spotlight.ref}
+      onMouseMove={spotlight.onMove}
+      style={{ '--mx': '50%', '--my': '0%' } as CSSProperties}
+      className="relative w-full scroll-mt-20 overflow-hidden border border-border bg-panel font-mono text-xs shadow-[0_32px_80px_-32px_rgb(0_0_0/0.9)]"
     >
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-surface/70 px-4 py-3">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-0.5 bg-accent" aria-hidden="true" />
+
+      <div className="relative flex flex-wrap items-center justify-between gap-3 border-b border-border bg-surface/80 px-4 py-3">
         <div className="flex items-center gap-3">
           <span className="flex items-center gap-2" aria-label={isStreaming ? 'Stream live' : 'Stream paused'}>
             <span className="relative flex h-2 w-2">
@@ -151,48 +158,53 @@ export function LogViewer() {
                 }`}
               />
             </span>
-            <span className={`font-sans text-xs font-semibold tracking-wide ${isStreaming ? 'text-accent' : 'text-amber-300'}`}>
+            <span className={`font-sans text-xs font-bold tracking-[0.18em] ${isStreaming ? 'text-accent' : 'text-amber-300'}`}>
               {isStreaming ? 'LIVE' : 'PAUSED'}
             </span>
           </span>
           <span className="hidden h-4 w-px bg-border sm:block" aria-hidden="true" />
           <span className="text-muted">local-dev-cluster.log</span>
+          <span className="hidden text-muted/50 md:inline">new line every 2.2s</span>
         </div>
 
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setLogs([])}
-            className="flex items-center gap-1.5 rounded-md border border-border bg-surface px-2.5 py-1.5 text-muted transition-colors hover:text-foreground"
-            aria-label="Clear log buffer"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Clear</span>
-          </button>
-          <button
-            onClick={() => setIsStreaming((s) => !s)}
-            className="flex items-center gap-1.5 rounded-md border border-border bg-surface px-2.5 py-1.5 text-foreground transition-colors hover:border-accent/50"
-            aria-label={isStreaming ? 'Pause stream' : 'Resume stream'}
-          >
-            {isStreaming ? (
-              <Pause className="h-3.5 w-3.5 text-amber-400" />
-            ) : (
-              <Play className="h-3.5 w-3.5 text-accent" />
-            )}
-            <span>{isStreaming ? 'Pause' : 'Resume'}</span>
-          </button>
+          <Magnetic strength={4}>
+            <button
+              onClick={() => setLogs([])}
+              className="flex items-center gap-1.5 border border-border bg-surface px-2.5 py-1.5 text-muted transition-colors hover:text-foreground"
+              aria-label="Clear log buffer"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Clear</span>
+            </button>
+          </Magnetic>
+          <Magnetic strength={4}>
+            <button
+              onClick={() => setIsStreaming((s) => !s)}
+              className="flex items-center gap-1.5 border border-border bg-surface px-2.5 py-1.5 text-foreground transition-colors hover:border-accent/60"
+              aria-label={isStreaming ? 'Pause stream' : 'Resume stream'}
+            >
+              {isStreaming ? (
+                <Pause className="h-3.5 w-3.5 text-amber-400" />
+              ) : (
+                <Play className="h-3.5 w-3.5 text-accent" />
+              )}
+              <span>{isStreaming ? 'Pause' : 'Resume'}</span>
+            </button>
+          </Magnetic>
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 border-b border-border bg-surface/40 p-3 sm:flex-row sm:items-center">
+      <div className="relative flex flex-col gap-3 border-b border-border bg-surface/40 p-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by service or message…"
+            placeholder="Search by service or message"
             aria-label="Search logs"
-            className="w-full rounded-md border border-border bg-background py-2 pl-9 pr-3 text-foreground placeholder:text-muted/60 focus:border-accent/60 focus:outline-none"
+            className="w-full border border-border bg-background py-2 pl-9 pr-3 text-foreground placeholder:text-muted/60 focus:border-accent/70 focus:outline-none"
           />
         </div>
 
@@ -201,69 +213,74 @@ export function LogViewer() {
             const active = filter === lvl;
             const count = lvl === 'ALL' ? logs.length : counts[lvl];
             return (
-              <button
-                key={lvl}
-                onClick={() => setFilter(lvl)}
-                aria-pressed={active}
-                className={`rounded-md border px-2.5 py-1.5 text-[11px] font-medium transition-colors ${
-                  active
-                    ? 'border-accent/50 bg-accent/10 text-accent'
-                    : 'border-transparent text-muted hover:bg-border/50 hover:text-foreground'
-                }`}
-              >
-                {lvl}
-                <span className={active ? 'ml-1.5 text-accent/70' : 'ml-1.5 text-muted/50'}>
-                  {count}
-                </span>
-              </button>
+              <Magnetic key={lvl} strength={3}>
+                <button
+                  onClick={() => setFilter(lvl)}
+                  aria-pressed={active}
+                  className={`border px-2.5 py-1.5 text-[11px] font-bold transition-colors ${
+                    active
+                      ? 'border-accent bg-accent text-accent-ink'
+                      : 'border-transparent text-muted hover:bg-border/50 hover:text-foreground'
+                  }`}
+                >
+                  {lvl}
+                  <span className={active ? 'ml-1.5 text-accent-ink/70' : 'ml-1.5 text-muted/50'}>
+                    {count}
+                  </span>
+                </button>
+              </Magnetic>
             );
           })}
         </div>
       </div>
 
-      <div className="log-scroll max-h-[420px] min-h-[280px] overflow-y-auto px-2 py-2 sm:px-3">
-        {visible.length === 0 ? (
-          <div className="flex min-h-[264px] flex-col items-center justify-center gap-2 px-4 text-center">
-            <Activity className="h-5 w-5 text-muted/60" />
-            <p className="font-sans text-sm text-muted">Nothing matches that filter.</p>
-            <p className="font-sans text-xs text-muted/60">
-              Try a different level, or clear the search box.
-            </p>
-          </div>
-        ) : (
-          <ol className="space-y-px">
-            {visible.map((log) => (
-              <motion.li
-                key={log.id}
-                initial={{ opacity: 0, y: -4 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.18 }}
-                className={`flex flex-wrap items-baseline gap-x-3 gap-y-0.5 rounded-r-md border-l-2 px-2 py-1.5 text-[11px] leading-relaxed hover:bg-border/25 sm:flex-nowrap sm:text-xs ${ROW_TONE[log.level]}`}
-              >
-                <span className="shrink-0 tabular-nums text-muted/70">{log.time}</span>
-                <span
-                  className={`w-12 shrink-0 rounded border px-1.5 py-px text-center text-[10px] font-semibold tracking-wide ${LEVEL_STYLES[log.level]}`}
+      <div className="relative">
+        <div className="log-spotlight pointer-events-none absolute inset-0 z-10 hidden md:block" aria-hidden="true" />
+        <div className="scanline pointer-events-none absolute inset-x-0 z-10 h-px bg-accent/25" aria-hidden="true" />
+        <div className="log-scroll max-h-[420px] min-h-[280px] overflow-y-auto px-2 py-2 sm:px-3">
+          {visible.length === 0 ? (
+            <div className="flex min-h-[264px] flex-col items-center justify-center gap-2 px-4 text-center">
+              <Activity className="h-5 w-5 text-muted/60" />
+              <p className="font-sans text-sm text-muted">Nothing matches that filter.</p>
+              <p className="font-sans text-xs text-muted/60">
+                Try a different level, or clear the search box.
+              </p>
+            </div>
+          ) : (
+            <ol className="space-y-px">
+              {visible.map((log) => (
+                <motion.li
+                  key={log.id}
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.22, ease: 'easeOut' }}
+                  className={`flex flex-wrap items-baseline gap-x-3 gap-y-0.5 rounded-r-sm border-l-2 px-2 py-1.5 text-[11px] leading-relaxed hover:bg-border/25 sm:flex-nowrap sm:text-xs ${ROW_TONE[log.level]}`}
                 >
-                  {log.level}
-                </span>
-                <span className="shrink-0 text-accent/80">[{log.service}]</span>
-                <span className="min-w-0 flex-1 break-words text-foreground/90">{log.message}</span>
-                <span className="shrink-0 tabular-nums text-muted/60">{log.latency}</span>
-              </motion.li>
-            ))}
-          </ol>
-        )}
+                  <span className="shrink-0 tabular-nums text-muted/70">{log.time}</span>
+                  <span
+                    className={`w-12 shrink-0 border px-1.5 py-px text-center text-[10px] font-bold tracking-wide ${LEVEL_STYLES[log.level]}`}
+                  >
+                    {log.level}
+                  </span>
+                  <span className="shrink-0 text-accent/80">[{log.service}]</span>
+                  <span className="min-w-0 flex-1 break-words text-foreground/90">{log.message}</span>
+                  <span className="shrink-0 tabular-nums text-muted/60">{log.latency}</span>
+                </motion.li>
+              ))}
+            </ol>
+          )}
+        </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-border bg-surface/50 px-4 py-2 text-[10px] text-muted">
+      <div className="relative flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-border bg-surface/60 px-4 py-2.5 text-[10px] text-muted">
         <span>
           {visible.length} of {logs.length} lines shown
         </span>
         <span className="flex items-center gap-3">
           <span>
-            <span className="text-red-300">{counts.ERROR} errors</span>
+            <span className="font-bold text-red-300">{counts.ERROR} errors</span>
             {' · '}
-            <span className="text-amber-300">{counts.WARN} warnings</span>
+            <span className="font-bold text-amber-300">{counts.WARN} warnings</span>
           </span>
           <span className="hidden sm:inline">Buffer keeps the last {MAX_LINES} lines</span>
         </span>
