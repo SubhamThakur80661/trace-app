@@ -3,7 +3,7 @@ import { Magnetic } from '../lib/motion';
 
 export function Navbar() {
   return (
-    <header className="nav-intro sticky top-0 z-50 w-full border-b border-border/70 bg-background/85 backdrop-blur-md">
+    <header className="nav-intro glass-nav sticky top-0 z-50 w-full">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <a href="#" className="flex items-center gap-2.5" aria-label="Trace home">
           <span className="flex h-7 w-7 items-center justify-center bg-accent text-accent-ink">

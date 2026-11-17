@@ -69,6 +69,113 @@
   -webkit-mask-image: linear-gradient(to bottom, black 0%, black 55%, transparent 100%);
 }
 
+/* ------------------------------------------------------------------ */
+/* Glassmorphism layer. Frosted surfaces over the dark poster bg:      */
+/* translucent fills + backdrop blur + soft shadows. Borders come from  */
+/* the markup (thin light `border-white/10`) so hover/focus border     */
+/* utilities keep working. Glass is static styling: it adds no motion  */
+/* and the prefers-reduced-motion rules below are untouched.           */
+/* The log lines themselves are never blurred — only the console       */
+/* frame and its bars, so the stream stays fast and crisp.             */
+/* ------------------------------------------------------------------ */
+
+/* General frosted panel: footer bar, stat cells, badges. */
+.glass {
+  background: linear-gradient(165deg, rgb(242 244 230 / 0.08), rgb(242 244 230 / 0.03));
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  backdrop-filter: blur(16px) saturate(1.4);
+  box-shadow:
+    0 16px 48px -16px rgb(0 0 0 / 0.65),
+    inset 0 1px 0 rgb(255 255 255 / 0.07);
+}
+
+/* Sticky navbar: blurs the page scrolling beneath it. */
+.glass-nav {
+  background: rgb(10 11 8 / 0.55);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  backdrop-filter: blur(18px) saturate(1.5);
+  border-bottom: 1px solid rgb(242 244 230 / 0.1);
+  box-shadow:
+    0 12px 32px -16px rgb(0 0 0 / 0.7),
+    inset 0 -1px 0 rgb(255 255 255 / 0.04);
+}
+
+/* Log console frame. Strong dark fill keeps the log stream readable;
+   the blur reads at the frame edges against the page grid. */
+.glass-console {
+  background: rgb(14 16 10 / 0.78);
+  -webkit-backdrop-filter: blur(20px) saturate(1.3);
+  backdrop-filter: blur(20px) saturate(1.3);
+  border: 1px solid rgb(242 244 230 / 0.1);
+  box-shadow:
+    0 32px 80px -32px rgb(0 0 0 / 0.9),
+    inset 0 1px 0 rgb(255 255 255 / 0.05);
+}
+
+/* Inner console bars (toolbar, filter/search, stats). Strong fill so
+   controls stay readable next to the streaming logs. */
+.glass-bar {
+  background: linear-gradient(180deg, rgb(26 28 18 / 0.78), rgb(18 20 13 / 0.72));
+  -webkit-backdrop-filter: blur(12px) saturate(1.3);
+  backdrop-filter: blur(12px) saturate(1.3);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06);
+}
+
+/* Small controls: buttons, search input, chips. */
+.glass-chip {
+  background: rgb(242 244 230 / 0.05);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05);
+}
+
+/* Dark frosted sample boxes inside feature rows. Opaque enough that the
+   sample text stays readable when the lime hover sweep slides under it. */
+.glass-dark {
+  background: rgb(14 16 10 / 0.85);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06);
+}
+
+/* Frosted sheen over the lime hover sweep on feature rows. It sits
+   between the sweep and the row content, so the text stays crisp. */
+.feature-row .row-glass {
+  opacity: 0;
+  transition: opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.16), rgb(255 255 255 / 0.02));
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+
+.feature-row:hover .row-glass,
+.feature-row:focus-within .row-glass {
+  opacity: 1;
+}
+
+/* No backdrop-filter support: fall back to more opaque fills so text
+   on frosted panels stays readable. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass {
+    background: rgb(24 26 17 / 0.94);
+  }
+  .glass-nav {
+    background: rgb(10 11 8 / 0.94);
+  }
+  .glass-console {
+    background: rgb(14 16 10 / 0.97);
+  }
+  .glass-bar {
+    background: rgb(22 24 15 / 0.96);
+  }
+  .glass-chip {
+    background: rgb(242 244 230 / 0.09);
+  }
+  .glass-dark {
+    background: rgb(14 16 10 / 0.96);
+  }
+}
+
 /* Giant outlined wordmark in the footer. */
 .outline-word {
   color: transparent;

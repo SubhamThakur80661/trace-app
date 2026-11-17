@@ -76,7 +76,7 @@ export default function App() {
           >
             trace.log
           </p>
-          <div className="flex flex-col gap-2 border-t border-border/60 py-6 font-mono text-[11px] text-muted sm:flex-row sm:items-center sm:justify-between">
+          <div className="glass mb-6 flex flex-col gap-2 border border-white/10 px-4 py-6 font-mono text-[11px] text-muted sm:flex-row sm:items-center sm:justify-between">
             <p>© {new Date().getFullYear()} Trace. A local log viewer. The demo streams sample logs.</p>
             <p className="text-muted/60">Acdyon Technical Assessment, Part 2</p>
           </div>

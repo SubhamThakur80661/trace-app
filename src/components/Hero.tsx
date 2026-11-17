@@ -16,7 +16,7 @@ export function Hero() {
       </p>
 
       <div className="relative mx-auto max-w-7xl">
-        <p className="hero-fade mb-6 inline-flex items-center gap-2 border border-border bg-surface px-3 py-1.5 font-mono text-[11px] tracking-wide text-muted">
+        <p className="hero-fade glass-chip mb-6 inline-flex items-center gap-2 border border-white/10 px-3 py-1.5 font-mono text-[11px] tracking-wide text-muted">
           <span className="relative flex h-2 w-2" aria-hidden="true">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-60" />
             <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
@@ -62,7 +62,7 @@ export function Hero() {
             <Magnetic>
               <a
                 href="#how-it-works"
-                className="inline-flex items-center justify-center gap-2 border border-border bg-surface px-6 py-3.5 text-sm font-medium text-foreground transition-colors hover:border-accent/60"
+                className="glass-chip inline-flex items-center justify-center gap-2 border border-white/10 px-6 py-3.5 text-sm font-medium text-foreground transition-colors hover:border-accent/60"
               >
                 How it works
                 <ArrowRight className="h-4 w-4" />
@@ -71,14 +71,14 @@ export function Hero() {
           </div>
         </div>
 
-        <dl className="hero-fade mt-10 grid grid-cols-2 gap-px border border-border bg-border sm:grid-cols-4">
+        <dl className="hero-fade mt-10 grid grid-cols-2 gap-px border border-white/10 bg-white/10 sm:grid-cols-4">
           {[
             ['Reads', 'local log files'],
             ['Sends', 'nothing anywhere'],
             ['Keeps', 'last 60 lines'],
             ['Runs on', 'macOS and Linux'],
           ].map(([term, value]) => (
-            <div key={term} className="bg-panel px-4 py-3">
+            <div key={term} className="glass-chip px-4 py-3">
               <dt className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted/70">
                 {term}
               </dt>
