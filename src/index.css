@@ -69,14 +69,32 @@
   -webkit-mask-image: linear-gradient(to bottom, black 0%, black 55%, transparent 100%);
 }
 
+/* Ambient colour behind the glass: soft lime + teal washes spread down
+   the page so frosted panels have something colourful to refract — blur
+   over flat black reads as nothing. Static gradients only, no motion, so
+   prefers-reduced-motion needs no exception. The washes stay dim (7–12%)
+   so light text keeps its contrast. Applied to the app root in App.tsx. */
+.ambient-page {
+  background-image:
+    radial-gradient(900px 600px at 8% 4%, rgb(215 255 62 / 0.12), transparent 65%),
+    radial-gradient(800px 560px at 92% 20%, rgb(45 212 191 / 0.09), transparent 65%),
+    radial-gradient(920px 640px at 10% 42%, rgb(215 255 62 / 0.11), transparent 65%),
+    radial-gradient(820px 580px at 90% 60%, rgb(45 212 191 / 0.08), transparent 65%),
+    radial-gradient(860px 600px at 14% 80%, rgb(215 255 62 / 0.08), transparent 65%),
+    radial-gradient(760px 520px at 86% 96%, rgb(45 212 191 / 0.07), transparent 65%);
+  background-repeat: no-repeat;
+}
+
 /* ------------------------------------------------------------------ */
 /* Glassmorphism layer. Frosted surfaces over the dark poster bg:      */
 /* translucent fills + backdrop blur + soft shadows. Borders come from  */
-/* the markup (thin light `border-white/10`) so hover/focus border     */
+/* the markup (thin light `border-white/15`) so hover/focus border     */
 /* utilities keep working. Glass is static styling: it adds no motion  */
 /* and the prefers-reduced-motion rules below are untouched.           */
 /* The log lines themselves are never blurred — only the console       */
 /* frame and its bars, so the stream stays fast and crisp.             */
+/* Fills stay translucent (8–25%): opaque fills made the glass         */
+/* invisible, because the blur had nothing to show through.            */
 /* ------------------------------------------------------------------ */
 
 /* General frosted panel: footer bar, stat cells, badges. */
@@ -89,50 +107,58 @@
     inset 0 1px 0 rgb(255 255 255 / 0.07);
 }
 
-/* Sticky navbar: blurs the page scrolling beneath it. */
+/* Sticky navbar: blurs the page scrolling beneath it. 20% fill — light
+   enough for the ambient washes to show through, dark enough that the
+   small nav text stays readable over any scroll position. */
 .glass-nav {
-  background: rgb(10 11 8 / 0.55);
+  background: rgb(10 11 8 / 0.2);
   -webkit-backdrop-filter: blur(18px) saturate(1.5);
   backdrop-filter: blur(18px) saturate(1.5);
-  border-bottom: 1px solid rgb(242 244 230 / 0.1);
+  border-bottom: 1px solid rgb(242 244 230 / 0.18);
   box-shadow:
     0 12px 32px -16px rgb(0 0 0 / 0.7),
     inset 0 -1px 0 rgb(255 255 255 / 0.04);
 }
 
-/* Log console frame. Strong dark fill keeps the log stream readable;
-   the blur reads at the frame edges against the page grid. */
+/* Log console frame. 25% fill — the strong end of the glass range,
+   because the frame sits right next to dense streaming text. The inner
+   stream area itself gets a solid background in the markup (see
+   LogViewer), so the log lines always sit on opaque black; only the
+   frame and its bars are frosted. */
 .glass-console {
-  background: rgb(14 16 10 / 0.78);
+  background: rgb(14 16 10 / 0.25);
   -webkit-backdrop-filter: blur(20px) saturate(1.3);
   backdrop-filter: blur(20px) saturate(1.3);
-  border: 1px solid rgb(242 244 230 / 0.1);
+  border: 1px solid rgb(242 244 230 / 0.18);
   box-shadow:
     0 32px 80px -32px rgb(0 0 0 / 0.9),
     inset 0 1px 0 rgb(255 255 255 / 0.05);
 }
 
-/* Inner console bars (toolbar, filter/search, stats). Strong fill so
-   controls stay readable next to the streaming logs. */
+/* Inner console bars (toolbar, filter/search, stats). 25% → 20% fill:
+   the strong end of the range so controls stay readable next to the
+   streaming logs, while the ambient wash still shows through. */
 .glass-bar {
-  background: linear-gradient(180deg, rgb(26 28 18 / 0.78), rgb(18 20 13 / 0.72));
+  background: linear-gradient(180deg, rgb(26 28 18 / 0.25), rgb(18 20 13 / 0.2));
   -webkit-backdrop-filter: blur(12px) saturate(1.3);
   backdrop-filter: blur(12px) saturate(1.3);
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06);
 }
 
-/* Small controls: buttons, search input, chips. */
+/* Small controls: buttons, search input, chips. 8% light tint. */
 .glass-chip {
-  background: rgb(242 244 230 / 0.05);
+  background: rgb(242 244 230 / 0.08);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05);
 }
 
-/* Dark frosted sample boxes inside feature rows. Opaque enough that the
-   sample text stays readable when the lime hover sweep slides under it. */
+/* Dark frosted sample boxes inside feature rows. 25% fill — the strong
+   end of the range for small mono text. On row hover the lime sweep
+   slides underneath, so the sample text switches to dark via
+   group-hover utilities in Features.tsx to keep its contrast. */
 .glass-dark {
-  background: rgb(14 16 10 / 0.85);
+  background: rgb(14 16 10 / 0.25);
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06);
@@ -153,26 +179,30 @@
   opacity: 1;
 }
 
-/* No backdrop-filter support: fall back to more opaque fills so text
-   on frosted panels stays readable. */
+/* No backdrop-filter support: fall back to somewhat stronger fills so
+   text on frosted panels stays readable without the blur. These stay
+   clearly translucent (30–55%) — never near-opaque — because the page
+   background is near-black and the text is light, so contrast holds
+   even without blur. This block is a readability safety net, not glass:
+   no browser that reaches it can show frosted panels anyway. */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .glass {
-    background: rgb(24 26 17 / 0.94);
+    background: rgb(24 26 17 / 0.3);
   }
   .glass-nav {
-    background: rgb(10 11 8 / 0.94);
+    background: rgb(10 11 8 / 0.5);
   }
   .glass-console {
-    background: rgb(14 16 10 / 0.97);
+    background: rgb(14 16 10 / 0.55);
   }
   .glass-bar {
-    background: rgb(22 24 15 / 0.96);
+    background: rgb(22 24 15 / 0.5);
   }
   .glass-chip {
-    background: rgb(242 244 230 / 0.09);
+    background: rgb(242 244 230 / 0.12);
   }
   .glass-dark {
-    background: rgb(14 16 10 / 0.96);
+    background: rgb(14 16 10 / 0.55);
   }
 }
 

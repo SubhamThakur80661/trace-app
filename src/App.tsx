@@ -59,7 +59,7 @@ export default function App() {
   }, []);
 
   return (
-    <div ref={rootRef} className="flex min-h-screen flex-col bg-background text-foreground">
+    <div ref={rootRef} className="ambient-page flex min-h-screen flex-col bg-background text-foreground">
       <Cursor />
       <Navbar />
       <main>
@@ -76,7 +76,7 @@ export default function App() {
           >
             trace.log
           </p>
-          <div className="glass mb-6 flex flex-col gap-2 border border-white/10 px-4 py-6 font-mono text-[11px] text-muted sm:flex-row sm:items-center sm:justify-between">
+          <div className="glass mb-6 flex flex-col gap-2 border border-white/15 px-4 py-6 font-mono text-[11px] text-muted sm:flex-row sm:items-center sm:justify-between">
             <p>© {new Date().getFullYear()} Trace. A local log viewer. The demo streams sample logs.</p>
             <p className="text-muted/60">Acdyon Technical Assessment, Part 2</p>
           </div>

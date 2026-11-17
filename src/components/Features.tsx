@@ -7,11 +7,11 @@ const ROWS = [
     title: 'Streams as it happens',
     body: 'New lines arrive as they are written. Pause the stream when you need to read one properly, then pick up where you left off.',
     sample: (
-      <p className="glass-dark mt-4 overflow-x-auto whitespace-nowrap border border-white/10 px-3 py-2 font-mono text-[11px] text-muted">
-        <span className="text-muted/60">21:44:02.401</span>
-        <span className="ml-2 text-sky-300">INFO</span>
-        <span className="ml-2 text-accent/80">[api-router]</span>
-        <span className="ml-2 text-foreground/80">GET /v1/telemetry 200 OK · 18ms</span>
+      <p className="glass-dark mt-4 overflow-x-auto whitespace-nowrap border border-white/15 px-3 py-2 font-mono text-[11px] text-muted transition-colors duration-300 group-hover:border-accent-ink/25 group-hover:text-accent-ink/80">
+        <span className="text-muted/60 transition-colors duration-300 group-hover:text-accent-ink/50">21:44:02.401</span>
+        <span className="ml-2 text-sky-300 transition-colors duration-300 group-hover:text-accent-ink">INFO</span>
+        <span className="ml-2 text-accent/80 transition-colors duration-300 group-hover:text-accent-ink/70">[api-router]</span>
+        <span className="ml-2 text-foreground/80 transition-colors duration-300 group-hover:text-accent-ink">GET /v1/telemetry 200 OK · 18ms</span>
       </p>
     ),
   },
@@ -29,9 +29,9 @@ const ROWS = [
     body: 'Filter by level, search by service or message. The chatty services stop drowning out the one you actually care about.',
     sample: (
       <p className="mt-4 flex flex-wrap gap-1.5">
-        <span className="border border-red-400/25 bg-red-400/10 px-2 py-0.5 font-mono text-[11px] text-red-300">ERROR</span>
-        <span className="glass-dark border border-white/10 px-2 py-0.5 font-mono text-[11px] text-muted">db-pool</span>
-        <span className="glass-dark border border-white/10 px-2 py-0.5 font-mono text-[11px] text-muted">timeout</span>
+        <span className="border border-red-400/25 bg-red-400/10 px-2 py-0.5 font-mono text-[11px] text-red-300 transition-colors duration-300 group-hover:border-red-900/40 group-hover:bg-red-500/25 group-hover:text-red-950">ERROR</span>
+        <span className="glass-dark border border-white/15 px-2 py-0.5 font-mono text-[11px] text-muted transition-colors duration-300 group-hover:border-accent-ink/25 group-hover:text-accent-ink/80">db-pool</span>
+        <span className="glass-dark border border-white/15 px-2 py-0.5 font-mono text-[11px] text-muted transition-colors duration-300 group-hover:border-accent-ink/25 group-hover:text-accent-ink/80">timeout</span>
       </p>
     ),
   },

@@ -145,7 +145,7 @@ export function LogViewer() {
     >
       <div className="pointer-events-none absolute inset-x-0 top-0 h-0.5 bg-accent" aria-hidden="true" />
 
-      <div className="glass-bar relative flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
+      <div className="glass-bar relative flex flex-wrap items-center justify-between gap-3 border-b border-white/15 px-4 py-3">
         <div className="flex items-center gap-3">
           <span className="flex items-center gap-2" aria-label={isStreaming ? 'Stream live' : 'Stream paused'}>
             <span className="relative flex h-2 w-2">
@@ -171,7 +171,7 @@ export function LogViewer() {
           <Magnetic strength={4}>
             <button
               onClick={() => setLogs([])}
-              className="glass-chip flex items-center gap-1.5 border border-white/10 px-2.5 py-1.5 text-muted transition-colors hover:text-foreground"
+              className="glass-chip flex items-center gap-1.5 border border-white/15 px-2.5 py-1.5 text-muted transition-colors hover:text-foreground"
               aria-label="Clear log buffer"
             >
               <Trash2 className="h-3.5 w-3.5" />
@@ -181,7 +181,7 @@ export function LogViewer() {
           <Magnetic strength={4}>
             <button
               onClick={() => setIsStreaming((s) => !s)}
-              className="glass-chip flex items-center gap-1.5 border border-white/10 px-2.5 py-1.5 text-foreground transition-colors hover:border-accent/60"
+              className="glass-chip flex items-center gap-1.5 border border-white/15 px-2.5 py-1.5 text-foreground transition-colors hover:border-accent/60"
               aria-label={isStreaming ? 'Pause stream' : 'Resume stream'}
             >
               {isStreaming ? (
@@ -195,7 +195,7 @@ export function LogViewer() {
         </div>
       </div>
 
-      <div className="glass-bar relative flex flex-col gap-3 border-b border-white/10 p-3 sm:flex-row sm:items-center">
+      <div className="glass-bar relative flex flex-col gap-3 border-b border-white/15 p-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
           <input
@@ -204,7 +204,7 @@ export function LogViewer() {
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by service or message"
             aria-label="Search logs"
-            className="glass-chip w-full border border-white/10 py-2 pl-9 pr-3 text-foreground placeholder:text-muted/60 focus:border-accent/70 focus:outline-none"
+            className="glass-chip w-full border border-white/15 py-2 pl-9 pr-3 text-foreground placeholder:text-muted/60 focus:border-accent/70 focus:outline-none"
           />
         </div>
 
@@ -234,7 +234,10 @@ export function LogViewer() {
         </div>
       </div>
 
-      <div className="relative">
+      {/* Log stream area: solid background, never frosted — the streaming
+          lines must stay crisp and fully readable. Only the console frame
+          and its bars are glass. */}
+      <div className="relative bg-panel">
         <div className="log-spotlight pointer-events-none absolute inset-0 z-10 hidden md:block" aria-hidden="true" />
         <div className="scanline pointer-events-none absolute inset-x-0 z-10 h-px bg-accent/25" aria-hidden="true" />
         <div className="log-scroll max-h-[420px] min-h-[280px] overflow-y-auto px-2 py-2 sm:px-3">
@@ -272,7 +275,7 @@ export function LogViewer() {
         </div>
       </div>
 
-      <div className="glass-bar relative flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-white/10 px-4 py-2.5 text-[10px] text-muted">
+      <div className="glass-bar relative flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-white/15 px-4 py-2.5 text-[10px] text-muted">
         <span>
           {visible.length} of {logs.length} lines shown
         </span>
